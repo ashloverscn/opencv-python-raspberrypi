@@ -1,3 +1,6 @@
+#!/bin/bash
+set -e
+
 echo "=== ONE-SHOT INSTALL for Raspberry Pi 3B (yolo-env) ==="
 
 echo "1) Update system"
@@ -34,3 +37,84 @@ echo "9) Install Ultralytics YOLO + OpenCV + helpers + picamera2 (from piwheels)
 pip install ultralytics pyyaml pillow matplotlib numpy opencv-python || true
 # try picamera2 from piwheels (will fall back to system package if available)
 pip install picamera2 --extra-index-url https://www.piwheels.org/simple || true
+
+echo "10) Create camera test script (640x480) at ~/test-picam.py"
+cat > ~/test-picam.py <<'PY'
+#!/usr/bin/env python3
+import os
+os.environ["PICAMERA2_NO_PREVIEW"] = "1"
+from picamera2 import Picamera2
+import cv2
+
+picam2 = Picamera2()
+picam2.configure(picam2.create_still_configuration({"size": (640, 480)}))
+picam2.start()
+
+print("[INFO] Camera started. Press 'q' to quit.")
+while True:
+    frame = picam2.capture_array()
+    if frame is None:
+        print("[ERROR] No frame received")
+        break
+    # convert 4-channel -> 3-channel if necessary
+    if frame.ndim == 3 and frame.shape[2] == 4:
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
+    cv2.imshow("Picamera2 Test 640x480", frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+picam2.stop()
+cv2.destroyAllWindows()
+PY
+chmod +x ~/test-picam.py
+
+echo "11) Create YOLO detection script at ~/yolo-picam.py"
+cat > ~/yolo-picam.py <<'PY'
+#!/usr/bin/env python3
+import os
+os.environ["PICAMERA2_NO_PREVIEW"] = "1"
+from picamera2 import Picamera2
+from ultralytics import YOLO
+import cv2
+
+# load small model (nano)
+model = YOLO("yolov8n.pt")
+
+picam2 = Picamera2()
+picam2.configure(picam2.create_preview_configuration({"size": (640, 480)}))
+picam2.start()
+
+print("[INFO] YOLOv8 Detection started. Press 'q' to quit.")
+try:
+    while True:
+        frame = picam2.capture_array()
+        if frame is None:
+            continue
+        # convert 4-channel -> 3-channel if necessary
+        if frame.ndim == 3 and frame.shape[2] == 4:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
+        results = model(frame)        # inference (may download model first run)
+        annotated = results[0].plot()
+        cv2.imshow("YOLOv8 Detection", annotated)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+finally:
+    picam2.stop()
+    cv2.destroyAllWindows()
+PY
+chmod +x ~/yolo-picam.py
+
+echo ""
+echo "=== INSTALL COMPLETE ✅ ==="
+echo "Usage:"
+echo "  1) Activate venv:   source ~/yolo-env/bin/activate"
+echo "  2) Test camera:     python ~/test-picam.py"
+echo "  3) Run YOLO demo:   python ~/yolo-picam.py"
+echo ""
+echo "Notes / Troubleshooting:"
+echo " - If the camera test fails, ensure camera is enabled in 'raspi-config' and reboot."
+echo " - If 'yolo-picam.py' errors about missing torch or slow model download, run the script and wait — 'yolov8n.pt' will download on first run."
+echo " - If PyTorch CPU wheel failed above, you can try a Pi/OS-specific wheel or run ultralytics with only CPU (some features slower)."
+echo " - If your DISPLAY is different than 'ash-PC:0.0', edit '~/yolo-env/bin/activate' and change the DISPLAY line before sourcing."
+echo ""
+echo "Done."
