@@ -1,0 +1,36 @@
+#!/bin/bash
+# Setup OpenCV + contrib + picamera2 on Raspberry Pi 3B with numpy < 2
+
+# Create venv
+python3 -m venv ~/opencv-env
+
+# Activate venv
+source ~/opencv-env/bin/activate
+
+# Upgrade pip
+pip install --upgrade pip
+
+# Install numpy < 2
+pip install "numpy<2"
+
+# Install OpenCV and contrib
+pip install opencv-python opencv-contrib-python
+
+# Install system dependencies for picamera2 and libcamera
+sudo apt update
+sudo apt install -y libcamera-apps libcamera-dev \
+                   python3-libcamera python3-kms++ \
+                   python3-pyqt5 python3-prctl \
+                   libatlas-base-dev ffmpeg
+
+# Install picamera2 from Raspberry Pi repo
+pip install --no-cache-dir git+https://github.com/raspberrypi/picamera2.git
+
+# Make system site-packages visible in venv (for libcamera)
+echo "export PYTHONPATH=/usr/lib/python3/dist-packages:\$PYTHONPATH" >> ~/opencv-env/bin/activate
+
+# Add X11 display export for remote GUI
+echo "export DISPLAY=ash-PC:0.0" >> ~/opencv-env/bin/activate
+
+# Verify installation
+python3 -c "import numpy, cv2; from picamera2 import Picamera2; print('numpy', numpy.__version__, 'opencv', cv2.__version__, 'picamera2 ready')"
