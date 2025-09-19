@@ -1,0 +1,36 @@
+echo "=== ONE-SHOT INSTALL for Raspberry Pi 3B (yolo-env) ==="
+
+echo "1) Update system"
+sudo apt update && sudo apt upgrade -y
+
+echo "2) Install system packages (camera libs, build deps, v4l-utils, ffmpeg, OpenCV deps)"
+sudo apt install -y python3-venv python3-pip git build-essential cmake pkg-config \
+    libatlas-base-dev libopenblas-dev liblapack-dev libjpeg-dev libpng-dev libtiff-dev \
+    libavcodec-dev libavformat-dev libswscale-dev libdrm-dev libopencv-dev v4l-utils ffmpeg \
+    python3-libcamera || true
+
+echo "3) (Optional) Enable camera if not already enabled"
+echo "   If your camera is not enabled, run: sudo raspi-config -> Interface Options -> Camera -> Enable, then reboot."
+# you can uncomment below to force enabling (will not reboot automatically here)
+# sudo raspi-config nonint do_camera 0 || true
+
+echo "4) Create Python virtualenv"
+python3 -m venv ~/yolo-env
+
+echo "5) Add DISPLAY and Picamera2 headless hint to venv activate (replace ash-PC:0.0 if your display is different)"
+echo 'export DISPLAY=ash-PC:0.0' >> ~/yolo-env/bin/activate
+echo 'export PICAMERA2_NO_PREVIEW=1' >> ~/yolo-env/bin/activate
+
+echo "6) Activate venv"
+source ~/yolo-env/bin/activate
+
+echo "7) Upgrade pip / wheel / setuptools"
+pip install --upgrade pip wheel setuptools
+
+echo "8) Try installing PyTorch (CPU). This may fail on some Pi OS builds; script will continue if it does."
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu || (echo "WARNING: PyTorch CPU wheel install failed — continuing. You may need a wheel built for your OS/Pi." && true)
+
+echo "9) Install Ultralytics YOLO + OpenCV + helpers + picamera2 (from piwheels)"
+pip install ultralytics pyyaml pillow matplotlib numpy opencv-python || true
+# try picamera2 from piwheels (will fall back to system package if available)
+pip install picamera2 --extra-index-url https://www.piwheels.org/simple || true
