@@ -10,8 +10,13 @@ sudo apt install -y \
 
 # Install the required Python modules
 
-sudo apt install -y python3 python3-pip python3-setuptools
-pip3 install --user jinja2 pybind11
+sudo apt install -y git python3 python3-pip python3-setuptools
+
+# Create venv for python3 to avoid breaking packages 
+
+python3 -m venv ~/python3
+source ~/python3/bin/activate
+pip3 install jinja2 pybind11
 
 # Clone libcamera
 
