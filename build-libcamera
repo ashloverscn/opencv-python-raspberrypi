@@ -5,7 +5,7 @@ sudo apt install -y \
     build-essential cmake git pkg-config libjpeg-dev libtiff5-dev \
     libpng-dev libavcodec-dev libavformat-dev libswscale-dev \
     libv4l-dev v4l-utils python3-dev python3-numpy \
-    libeigen3-dev libtbb-dev libboost-dev libdrm-dev
+    libeigen3-dev libtbb-dev libboost-dev libdrm-dev meson ninja-build
 
 # Clone libcamera
 
