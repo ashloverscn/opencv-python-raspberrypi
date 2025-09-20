@@ -19,10 +19,7 @@ pip install opencv-python opencv-contrib-python
 # Install system dependencies for picamera2 and libcamera
 sudo apt update
 sudo apt install -y git
-sudo apt install -y libcamera-apps python3-libcamera libcamera-dev \
-                   python3-libcamera python3-kms++ \
-                   python3-pyqt5 python3-prctl \
-                   libatlas-base-dev ffmpeg
+sudo apt install -y python3-picamera2 libcamera-apps libcamera-dev python3-libcamera python3-kms++ python3-pyqt5 python3-prctl libatlas-base-dev ffmpeg
 
 # Install python dependencies for building wheel 
 sudo apt install -y build-essential python3-dev libcap-dev
