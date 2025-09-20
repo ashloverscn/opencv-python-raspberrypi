@@ -25,6 +25,7 @@ sudo apt install -y libcamera-apps libcamera-dev \
 
 # Install picamera2 from Raspberry Pi repo
 pip install --no-cache-dir git+https://github.com/raspberrypi/picamera2.git
+pip install picamera2
 
 # Make system site-packages visible in venv (for libcamera)
 echo "export PYTHONPATH=/usr/lib/python3/dist-packages:\$PYTHONPATH" >> ~/opencv-env/bin/activate
