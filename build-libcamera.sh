@@ -1,0 +1,45 @@
+# Install dependencies
+
+sudo apt update
+sudo apt install -y \
+    build-essential cmake git pkg-config libjpeg-dev libtiff5-dev \
+    libpng-dev libavcodec-dev libavformat-dev libswscale-dev \
+    libv4l-dev v4l-utils python3-dev python3-numpy \
+    libeigen3-dev libtbb-dev libboost-dev libdrm-dev
+
+# Clone libcamera
+
+git clone https://git.linuxtv.org/libcamera.git
+cd libcamera
+
+# Build libcamera
+
+meson build
+ninja -C build
+sudo ninja -C build install
+
+# Test the camera
+
+# Show a live preview for 5 seconds
+libcamera-hello -t 5000
+# Show a live preview indefinitely until Ctrl+C
+libcamera-hello -t 0
+# Capture a photo and save it as test.jpg
+libcamera-jpeg -o test.jpg
+# Capture at 1920x1080 resolution
+libcamera-jpeg -o hd_test.jpg --width 1920 --height 1080
+
+# Capture a still photo (higher quality / full sensor)
+libcamera-still -o highres.jpg
+# Set timeout to 2 seconds to allow auto exposure
+libcamera-still -t 2000 -o highres2.jpg
+
+# Record a 10-second video
+libcamera-vid -t 10000 -o test.h264
+# Record a 30-second video in full HD
+libcamera-vid -t 30000 -o video1080.h264 --width 1920 --height 1080
+# Play the recorded video 
+omxplayer test.h264
+# Convert to mp4
+MP4Box -add test.h264 test.mp4
+
