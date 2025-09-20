@@ -24,7 +24,7 @@ sudo apt install -y libcamera-apps libcamera-dev \
                    libatlas-base-dev ffmpeg
 
 # Install python dependencies for building wheel 
-sudo apt install -y libcap-dev
+sudo apt install -y python3-dev libcap-dev
 
 # Install picamera2 from Raspberry Pi repo
 pip install --no-cache-dir git+https://github.com/raspberrypi/picamera2.git
