@@ -11,7 +11,7 @@ python3 -m venv ~/opencv-env
 source ~/opencv-env/bin/activate
 
 # Install and Upgrade pip
-sudo apt install python3 python3-pip python pip -y
+sudo apt install python3 python3-pip pip -y
 pip install --upgrade pip
 
 # Install numpy < 2
