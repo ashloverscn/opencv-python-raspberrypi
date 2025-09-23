@@ -7,8 +7,9 @@ import time
 
 # Initialize camera
 camera = Picamera2()
-camera_config = camera.create_preview_configuration(main={"size": (640, 480), "format": "RGB888"})
-camera.configure(camera_config)
+#config = camera.create_preview_configuration(main={"size": (640, 480), "format": "RGB888"})
+config = picam2.create_preview_configuration(main={"format": "RGB888", "size": (640, 480)})
+camera.configure(config)
 camera.start()
 
 time.sleep(0.1)
