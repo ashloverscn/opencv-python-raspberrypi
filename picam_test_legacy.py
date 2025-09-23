@@ -7,7 +7,7 @@ import time
 
 # Initialize camera
 camera = Picamera2()
-#config = camera.create_preview_configuration(main={"size": (640, 480), "format": "RGB888"})
+#config = camera.create_preview_configuration(main={"format": "RGB888", "size": (640, 480)})
 config = camera.create_preview_configuration(main={"format": "RGB888", "size": (640, 480)})
 camera.configure(config)
 camera.start()
