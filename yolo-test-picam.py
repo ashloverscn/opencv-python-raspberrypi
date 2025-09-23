@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import os
 os.environ["PICAMERA2_NO_PREVIEW"] = "1"
 from picamera2 import Picamera2
