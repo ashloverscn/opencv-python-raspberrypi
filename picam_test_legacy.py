@@ -7,7 +7,7 @@ import time
 
 # Initialize camera
 camera = Picamera2()
-camera_config = camera.create_preview_configuration(main={"size": (640, 480), "format": "BGR888"})
+camera_config = camera.create_preview_configuration(main={"size": (640, 480), "format": "RGB888"})
 camera.configure(camera_config)
 camera.start()
 
@@ -16,11 +16,14 @@ time.sleep(0.1)
 try:
     while True:
         frame = camera.capture_array()
+        # Convert RGB → BGR for OpenCV display
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+
         cv2.imshow("PiCamera2", frame)
 
         key = cv2.waitKey(1) & 0xFF
         if key == 27:  # ESC to quit
             break
 finally:
-    cv2.destroyAllWindows()
     camera.stop()
+    cv2.destroyAllWindows()
