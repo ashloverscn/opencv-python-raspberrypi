@@ -17,7 +17,7 @@ try:
     while True:
         frame = camera.capture_array()
         # Convert RGB → BGR for OpenCV display
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        #frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
         cv2.imshow("PiCamera2", frame)
 
