@@ -7,6 +7,12 @@ sudo apt update && sudo apt upgrade -y
 # Create venv
 python3 -m venv ~/opencv-env
 
+# Make system site-packages visible in venv (for libcamera)
+echo "export PYTHONPATH=/usr/lib/python3/dist-packages:\$PYTHONPATH" >> ~/opencv-env/bin/activate
+
+# Add X11 display export for remote GUI
+echo "export DISPLAY=ash-PC:0.0" >> ~/opencv-env/bin/activate
+
 # Activate venv
 source ~/opencv-env/bin/activate
 
@@ -27,12 +33,6 @@ sudo apt install -y git build-essential python3-dev python3-libcamera python3-pi
 # Install picamera2 from Raspberry Pi repo
 #pip install --no-cache-dir git+https://github.com/raspberrypi/picamera2.git
 pip install picamera2
-
-# Make system site-packages visible in venv (for libcamera)
-echo "export PYTHONPATH=/usr/lib/python3/dist-packages:\$PYTHONPATH" >> ~/opencv-env/bin/activate
-
-# Add X11 display export for remote GUI
-echo "export DISPLAY=ash-PC:0.0" >> ~/opencv-env/bin/activate
 
 # Verify installation
 python3 -c "import numpy, cv2; from picamera2 import Picamera2; print('numpy', numpy.__version__, 'opencv', cv2.__version__, 'picamera2 ready')"
