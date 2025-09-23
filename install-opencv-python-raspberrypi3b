@@ -20,11 +20,8 @@ source ~/opencv-env/bin/activate
 sudo apt install python3 python3-pip pip -y
 pip install --upgrade pip
 
-# Install numpy < 2
-pip install "numpy<2"
-
 # Install OpenCV and contrib
-pip install opencv-python opencv-contrib-python
+pip install opencv-python opencv-contrib-python "numpy<2"
 
 # Install system dependencies for picamera2 and libcamera and python dependencies for building wheel 
 #sudo apt install -y git build-essential python3-dev python3-libcamera python3-picamera2 python3-kms++ python3-pyqt5 python3-prctl libcamera-apps libcamera-dev libcap-dev libgl1-mesa-glx libglib2.0-0 libatlas-base-dev ffmpeg
