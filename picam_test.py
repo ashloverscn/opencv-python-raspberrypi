@@ -5,7 +5,7 @@ from picamera2 import Picamera2
 
 # Initialize Pi Camera
 picam2 = Picamera2()
-config = picam2.create_preview_configuration(main={"format": "RGB888", "size": >
+config = picam2.create_preview_configuration(main={"format": "RGB888", "size": (640, 480)})
 picam2.configure(config)
 picam2.start()
 
