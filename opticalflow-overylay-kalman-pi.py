@@ -4,7 +4,7 @@ from picamera2 import Picamera2
 
 # --- Initialize Picamera2 ---
 picam2 = Picamera2()
-picam2.configure(picam2.create_preview_configuration(main={"format": "RGB888", "size": (640, 480)}))
+picam2.configure(picam2.create_preview_configuration(main={"format": "RGB888", "size": (320, 240)}))
 picam2.start()
 
 # Read the first frame
