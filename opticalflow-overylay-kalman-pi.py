@@ -22,6 +22,8 @@ if frame1 is None:
     print("Error: Cannot capture first frame.")
     exit()
 
+# Convert RGB -> BGR for OpenCV display
+frame1 = cv2.cvtColor(frame1, cv2.COLOR_RGB2BGR)
 frame1 = cv2.resize(frame1, (FRAME_WIDTH, FRAME_HEIGHT))
 prev_gray = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
 
@@ -46,6 +48,11 @@ try:
     while True:
         # Capture new frame
         frame2 = picam2.capture_array()
+        if frame2 is None:
+            continue
+
+        # Convert RGB -> BGR for OpenCV
+        frame2 = cv2.cvtColor(frame2, cv2.COLOR_RGB2BGR)
         frame2 = cv2.resize(frame2, (FRAME_WIDTH, FRAME_HEIGHT))
         gray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
 
@@ -81,4 +88,3 @@ try:
 finally:
     picam2.close()
     cv2.destroyAllWindows()
-    
