@@ -10,8 +10,8 @@ HOST = "0.0.0.0"   # listen on all interfaces
 PORT = 8485
 
 # --- Adjustable settings ---
-FRAME_WIDTH  = 320   # set to 640, 800, etc.
-FRAME_HEIGHT = 240   # set to 480, 600, etc.
+FRAME_WIDTH  = 640   # set to 320, 640, 800, etc.
+FRAME_HEIGHT = 480   # set to 240, 480, 600, etc.
 SENSITIVITY  = 1.8   # lower = more sensitive, higher = less sensitive
 STEP         = 18    # grid spacing for flow visualization
 
