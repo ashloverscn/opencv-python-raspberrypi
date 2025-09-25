@@ -7,8 +7,6 @@ from picamera2 import Picamera2
 # --- Adjustable settings ---
 FRAME_WIDTH  = 640   # set to 320, 640, 800, etc.
 FRAME_HEIGHT = 480   # set to 240, 480, 600, etc.
-SENSITIVITY  = 1.9   # lower = more sensitive, higher = less sensitive
-STEP         = 11    # grid spacing for trajectory visualization
 
 # Initialize Picamera2
 picam2 = Picamera2()
@@ -17,7 +15,7 @@ picam2.configure(config)
 picam2.start()
 
 # ORB setup
-orb = cv2.ORB_create(nfeatures=int(2000 / SENSITIVITY))  # adjust features by sensitivity
+orb = cv2.ORB_create(nfeatures=1000)  # fewer features for faster processing
 bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
 prev_gray = None
@@ -30,7 +28,7 @@ pos = np.array([trajectory_size // 2, trajectory_size // 2], dtype=np.int32)
 
 try:
     while True:
-        # Capture frame from Picamera2
+        # Capture frame in RGB
         frame_rgb = picam2.capture_array()
         gray = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2GRAY)
 
@@ -50,9 +48,9 @@ try:
 
             # Compute simplified motion
             motion = np.array([0.0, 0.0])
-            for m in matches[:int(30 / SENSITIVITY)]:  # fewer matches if less sensitive
+            for m in matches[:30]:  # top 30 matches
                 motion += np.array(kp[m.trainIdx].pt) - np.array(prev_kp[m.queryIdx].pt)
-            motion /= max(len(matches[:int(30 / SENSITIVITY)]), 1)
+            motion /= max(len(matches[:30]), 1)
 
             # Invert Z-axis (vertical motion)
             motion[1] = -motion[1]
@@ -60,13 +58,10 @@ try:
             # Update trajectory position
             pos += motion.astype(np.int32)
             pos = np.clip(pos, 0, trajectory_size - 1)
-
-            # Draw trajectory with adjustable STEP
-            if pos[0] % STEP == 0 and pos[1] % STEP == 0:
-                cv2.circle(trajectory, tuple(pos), 2, (0, 0, 255), -1)
+            cv2.circle(trajectory, tuple(pos), 2, (0, 0, 255), -1)
 
             # Resize trajectory to match frame size
-            traj_resized = cv2.resize(trajectory, (frame_rgb.shape[1], frame_rgb.shape[0]))
+            traj_resized = cv2.resize(trajectory, (FRAME_WIDTH, FRAME_HEIGHT))
             combined = cv2.hconcat([frame_rgb, traj_resized])
             cv2.imshow("ORB-SLAM Picamera2", combined)
 
