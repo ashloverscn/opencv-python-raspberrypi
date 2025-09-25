@@ -5,8 +5,8 @@ import numpy as np
 from picamera2 import Picamera2
 
 # --- Adjustable settings ---
-FRAME_WIDTH  = 640   # set to 320, 640, 800, etc.
-FRAME_HEIGHT = 480   # set to 240, 480, 600, etc.
+FRAME_WIDTH  = 320   # set to 320, 640, 800, etc.
+FRAME_HEIGHT = 240   # set to 240, 480, 600, etc.
 
 # Initialize Picamera2
 picam2 = Picamera2()
