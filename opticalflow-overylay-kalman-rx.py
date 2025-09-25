@@ -8,6 +8,10 @@ import pickle
 HOST = "0.0.0.0"   # listen on all interfaces
 PORT = 8485
 
+# --- Adjustable frame size ---
+FRAME_WIDTH = 320
+FRAME_HEIGHT = 240
+
 # --- Setup socket server ---
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.bind((HOST, PORT))
@@ -41,13 +45,13 @@ if frame is None:
     print("Error: Cannot capture first frame.")
     exit()
 
-# Resize to 320x240
-frame = cv2.resize(frame, (320, 240))
+# Resize to chosen resolution
+frame = cv2.resize(frame, (FRAME_WIDTH, FRAME_HEIGHT))
 prev_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
 # Parameters
 step = 16
-threshold = 1.0   # lower threshold = more sensitive
+threshold = 1.0   # sensitivity
 h, w = prev_gray.shape
 
 # --- Initialize Kalman filters ---
@@ -88,11 +92,11 @@ try:
 
         buffer = pickle.loads(frame_data)
         frame = cv2.imdecode(buffer, cv2.IMREAD_COLOR)
-        frame = cv2.resize(frame, (320, 240))
+        frame = cv2.resize(frame, (FRAME_WIDTH, FRAME_HEIGHT))
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        # Compute optical flow (slightly more sensitive params)
+        # Compute optical flow
         flow = cv2.calcOpticalFlowFarneback(prev_gray, gray, None,
                                             0.5, 3, 9, 2, 5, 1.1, 0)
         output = frame.copy()
@@ -112,7 +116,7 @@ try:
                                     (0, 255, 0), 1, tipLength=0.3)
                     print(f"Point ({x},{y}) → Smoothed ({end_x},{end_y})")
 
-        cv2.imshow("Smoothed Optical Flow (320x240, sensitive)", output)
+        cv2.imshow(f"Smoothed Optical Flow ({FRAME_WIDTH}x{FRAME_HEIGHT})", output)
         prev_gray = gray.copy()
 
         if cv2.waitKey(1) & 0xFF == 27:
