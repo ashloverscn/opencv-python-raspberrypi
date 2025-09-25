@@ -8,9 +8,11 @@ import pickle
 HOST = "0.0.0.0"   # listen on all interfaces
 PORT = 8485
 
-# --- Adjustable frame size ---
-FRAME_WIDTH = 320
-FRAME_HEIGHT = 240
+# --- Adjustable settings ---
+FRAME_WIDTH  = 320   # set to 640, 800, etc.
+FRAME_HEIGHT = 240   # set to 480, 600, etc.
+SENSITIVITY  = 1.8   # lower = more sensitive, higher = less sensitive
+STEP         = 18    # grid spacing for flow visualization
 
 # --- Setup socket server ---
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -49,15 +51,11 @@ if frame is None:
 frame = cv2.resize(frame, (FRAME_WIDTH, FRAME_HEIGHT))
 prev_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-# Parameters
-step = 16
-threshold = 1.0   # sensitivity
-h, w = prev_gray.shape
-
 # --- Initialize Kalman filters ---
+h, w = prev_gray.shape
 kalman_filters = {}
-for y in range(0, h, step):
-    for x in range(0, w, step):
+for y in range(0, h, STEP):
+    for x in range(0, w, STEP):
         kf = cv2.KalmanFilter(4, 2)
         kf.measurementMatrix = np.array([[1,0,0,0],
                                          [0,1,0,0]], np.float32)
@@ -102,10 +100,10 @@ try:
         output = frame.copy()
 
         # Draw smoothed motion vectors
-        for y in range(0, h, step):
-            for x in range(0, w, step):
+        for y in range(0, h, STEP):
+            for x in range(0, w, STEP):
                 fx, fy = flow[y, x]
-                if np.sqrt(fx**2 + fy**2) > threshold:
+                if np.sqrt(fx**2 + fy**2) > SENSITIVITY:
                     measured = np.array([[np.float32(x + fx)], [np.float32(y + fy)]])
                     kf = kalman_filters[(x,y)]
                     kf.correct(measured)
@@ -116,10 +114,10 @@ try:
                                     (0, 255, 0), 1, tipLength=0.3)
                     print(f"Point ({x},{y}) → Smoothed ({end_x},{end_y})")
 
-        cv2.imshow(f"Smoothed Optical Flow ({FRAME_WIDTH}x{FRAME_HEIGHT})", output)
+        cv2.imshow(f"Smoothed Optical Flow ({FRAME_WIDTH}x{FRAME_HEIGHT}, Sens={SENSITIVITY})", output)
         prev_gray = gray.copy()
 
-        if cv2.waitKey(1) & 0xFF == 27:
+        if cv2.waitKey(1) & 0xFF == 27:  # ESC
             break
 
 except Exception as e:
