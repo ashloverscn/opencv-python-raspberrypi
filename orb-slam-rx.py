@@ -73,6 +73,9 @@ try:
                 motion += np.array(kp[m.trainIdx].pt) - np.array(prev_kp[m.queryIdx].pt)
             motion /= max(len(matches[:50]), 1)
 
+            # Invert Z-axis (vertical motion)
+            motion[1] = -motion[1]
+
             # Update trajectory position
             pos += motion.astype(np.int32)
             pos = np.clip(pos, 0, trajectory_size - 1)
