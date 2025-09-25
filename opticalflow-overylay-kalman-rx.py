@@ -12,8 +12,8 @@ PORT = 8485
 # --- Adjustable settings ---
 FRAME_WIDTH  = 320   # set to 320, 640, 800, etc.
 FRAME_HEIGHT = 240   # set to 240, 480, 600, etc.
-SENSITIVITY  = 1.8   # lower = more sensitive, higher = less sensitive
-STEP         = 18    # grid spacing for flow visualization
+SENSITIVITY  = 1.9   # lower = more sensitive, higher = less sensitive
+STEP         = 11    # grid spacing for flow visualization
 
 # --- Setup socket server ---
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -128,3 +128,4 @@ finally:
     conn.close()
     server_socket.close()
     cv2.destroyAllWindows()
+    
