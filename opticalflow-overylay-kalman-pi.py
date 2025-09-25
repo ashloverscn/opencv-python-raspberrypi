@@ -81,3 +81,4 @@ try:
 finally:
     picam2.close()
     cv2.destroyAllWindows()
+    
