@@ -7,7 +7,9 @@ import time
 # Camera setup
 # -----------------------------
 picam2 = Picamera2()
-config = picam2.create_preview_configuration(main={"size": (640, 480), "format": "XRGB8888"})
+config = picam2.create_preview_configuration(
+    main={"size": (640, 480), "format": "XRGB8888"}
+)
 picam2.configure(config)
 picam2.start()
 time.sleep(0.5)  # camera warmup
@@ -21,12 +23,11 @@ MIN_DISTANCE = 7
 BLOCK_SIZE = 7
 FEATURE_REFRESH_INTERVAL = 30
 STATIONARY_THRESHOLD = 2.0  # pixels
-FPS = 30  # approximate frame rate
 
 # -----------------------------
 # Kalman Filter Setup (XYZ + velocity)
-# 6 states: x, y, z, vx, vy, vz
-# 3 measurements: x, y, z
+# State: [x, y, z, vx, vy, vz]
+# Measurement: [x, y, z]
 # -----------------------------
 kalman = cv2.KalmanFilter(6, 3)
 kalman.measurementMatrix = np.array([[1,0,0,0,0,0],
@@ -39,6 +40,7 @@ kalman.transitionMatrix = np.array([[1,0,0,1,0,0],
                                     [0,0,0,0,1,0],
                                     [0,0,0,0,0,1]], np.float32)
 kalman.processNoiseCov = np.eye(6, dtype=np.float32) * 0.03
+kalman.measurementNoiseCov = np.eye(3, dtype=np.float32) * 0.5  # smooth measurement noise
 
 # -----------------------------
 # Initial feature detection
@@ -52,7 +54,7 @@ p0 = cv2.goodFeaturesToTrack(old_gray, mask=None, maxCorners=MAX_CORNERS,
 frame_idx = 0
 
 # -----------------------------
-# Relative Z estimation function
+# Relative Z estimation
 # -----------------------------
 def estimate_z(points):
     if len(points) < 2:
@@ -88,7 +90,6 @@ while True:
         if len(stationary_points) > 0:
             centroid = np.mean(stationary_points, axis=0)
             z = estimate_z(stationary_points)
-            dz = z - old_z
             old_z = z
 
             measured = np.array([[np.float32(centroid[0])],
@@ -100,21 +101,19 @@ while True:
             predicted = kalman.predict()
             px, py, pz, vx, vy, vz = predicted.flatten()
 
-            # Relative velocity (pixels/frame)
-            rel_vx = vx
-            rel_vy = vy
-            rel_vz = vz
+            # Smoothed velocity directly from Kalman
+            smoothed_vx, smoothed_vy, smoothed_vz = vx, vy, vz
 
-            # Print position and velocity (drift correction info)
+            # Display XYZ position
             cv2.circle(frame, (int(px), int(py)), 6, (0,0,255), 2)
             cv2.putText(frame,
                         f"X:{int(px)} Y:{int(py)} Z:{int(pz)}",
                         (10,30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,0,0),2)
             cv2.putText(frame,
-                        f"Vx:{rel_vx:.2f} Vy:{rel_vy:.2f} Vz:{rel_vz:.2f}",
+                        f"Vx:{smoothed_vx:.2f} Vy:{smoothed_vy:.2f} Vz:{smoothed_vz:.2f}",
                         (10,60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255),2)
 
-            # Here you can use rel_vx, rel_vy, rel_vz to **send corrections** to drone motors
+            # Here you can use smoothed_vx, vy, vz to counteract drone drift
 
         p0 = good_new.reshape(-1,1,2)
 
@@ -129,7 +128,7 @@ while True:
                                      blockSize=BLOCK_SIZE)
 
     # Display
-    cv2.imshow("Drone Drift Compensation XYZ + Velocity", frame)
+    cv2.imshow("Drone Position + Smoothed Velocity", frame)
     if cv2.waitKey(1) & 0xFF == 27:  # ESC
         break
 
