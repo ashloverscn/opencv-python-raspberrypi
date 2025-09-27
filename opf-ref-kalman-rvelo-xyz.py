@@ -26,6 +26,8 @@ STATIONARY_THRESHOLD = 2.0  # pixels
 
 # -----------------------------
 # Kalman Filter Setup (XYZ + velocity)
+# State: [x, y, z, vx, vy, vz]
+# Measurement: [x, y, z]
 # -----------------------------
 kalman = cv2.KalmanFilter(6, 3)
 kalman.measurementMatrix = np.array([[1,0,0,0,0,0],
@@ -38,7 +40,7 @@ kalman.transitionMatrix = np.array([[1,0,0,1,0,0],
                                     [0,0,0,0,1,0],
                                     [0,0,0,0,0,1]], np.float32)
 kalman.processNoiseCov = np.eye(6, dtype=np.float32) * 0.03
-kalman.measurementNoiseCov = np.eye(3, dtype=np.float32) * 0.5
+kalman.measurementNoiseCov = np.eye(3, dtype=np.float32) * 0.5  # smooth measurement noise
 
 # -----------------------------
 # Initial feature detection
@@ -58,7 +60,7 @@ def estimate_z(points):
     if len(points) < 2:
         return 0
     dists = np.linalg.norm(points[:, None] - points[None, :], axis=2)
-    return np.mean(dists)
+    return np.mean(dists)  # relative Z
 
 old_z = estimate_z(p0.reshape(-1,2)) if p0 is not None else 0
 
@@ -79,6 +81,12 @@ while True:
         movement = np.linalg.norm(good_new - good_old, axis=1)
         stationary_points = good_new[movement < STATIONARY_THRESHOLD]
 
+        # Draw stationary points
+        for pt in stationary_points:
+            x, y = pt.ravel()
+            cv2.circle(frame, (int(x), int(y)), 4, (0,255,0), -1)
+
+        # Centroid and relative Z
         if len(stationary_points) > 0:
             centroid = np.mean(stationary_points, axis=0)
             z = estimate_z(stationary_points)
@@ -93,16 +101,10 @@ while True:
             predicted = kalman.predict()
             px, py, pz, vx, vy, vz = predicted.flatten()
 
-            # Smoothed velocity
+            # Smoothed velocity directly from Kalman
             smoothed_vx, smoothed_vy, smoothed_vz = vx, vy, vz
 
-            # -----------------------------
-            # Print to terminal
-            # -----------------------------
-            print(f"Position -> X:{px:.2f} Y:{py:.2f} Z:{pz:.2f} | "
-                  f"Velocity -> Vx:{smoothed_vx:.2f} Vy:{smoothed_vy:.2f} Vz:{smoothed_vz:.2f}")
-
-            # Optional: draw on frame
+            # Display XYZ position
             cv2.circle(frame, (int(px), int(py)), 6, (0,0,255), 2)
             cv2.putText(frame,
                         f"X:{int(px)} Y:{int(py)} Z:{int(pz)}",
@@ -111,18 +113,21 @@ while True:
                         f"Vx:{smoothed_vx:.2f} Vy:{smoothed_vy:.2f} Vz:{smoothed_vz:.2f}",
                         (10,60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255),2)
 
+            # Here you can use smoothed_vx, vy, vz to counteract drone drift
+
         p0 = good_new.reshape(-1,1,2)
 
     old_gray = frame_gray.copy()
     frame_idx += 1
 
-    # Refresh features periodically
+    # Refresh features
     if frame_idx % FEATURE_REFRESH_INTERVAL == 0 or p0 is None or len(p0) < 10:
         p0 = cv2.goodFeaturesToTrack(frame_gray, mask=None, maxCorners=MAX_CORNERS,
                                      qualityLevel=QUALITY_LEVEL,
                                      minDistance=MIN_DISTANCE,
                                      blockSize=BLOCK_SIZE)
 
+    # Display
     cv2.imshow("Drone Position + Smoothed Velocity", frame)
     if cv2.waitKey(1) & 0xFF == 27:  # ESC
         break
