@@ -7,7 +7,7 @@ import pickle
 import time
 
 # Workstation IP + Port
-HOST = "192.168.29.165"  
+HOST = "localhost"  
 PORT = 8485
 
 # Setup webcam (device 0)
