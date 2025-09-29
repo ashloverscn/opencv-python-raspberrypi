@@ -8,7 +8,7 @@ import time
 
 # Workstation IP + Port
 HOST = "localhost"  
-PORT = 8488
+PORT = 8485
 
 # Setup webcam (device 0)
 camera = cv2.VideoCapture(0)  # /dev/video0
