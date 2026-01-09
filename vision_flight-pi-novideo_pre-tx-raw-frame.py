@@ -185,3 +185,4 @@ finally:
     if client_socket:
         client_socket.close()
     picam.stop()
+
