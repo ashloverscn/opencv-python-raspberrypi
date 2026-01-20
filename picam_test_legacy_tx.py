@@ -14,7 +14,7 @@ PORT = 8485
 # Setup camera
 camera = Picamera2()
 #config = camera.create_preview_configuration(main={"format": "RGB888", "size": (640, 480)})
-config = camera.create_preview_configuration(main={"format": "RGB888", "size": (640, 480)}, raw={"size": (2592, 1944)})
+config = camera.create_preview_configuration(main={"format": "RGB888", "size": (1296, 972)}, raw={"size": (2592, 1944)})
 camera.configure(config)
 camera.start()
 time.sleep(0.1)
