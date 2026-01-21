@@ -6,14 +6,14 @@ import socket
 import struct
 import pickle
 
-HOST = "0.0.0.0"   # listen on all interfaces
+HOST = "0.0.0.0"
 PORT = 8485
 
 # --- Adjustable settings ---
-FRAME_WIDTH  = 320   # set to 320, 640, 800, etc.
-FRAME_HEIGHT = 240   # set to 240, 480, 600, etc.
-SENSITIVITY  = 1.9   # lower = more sensitive, higher = less sensitive
-STEP         = 11    # grid spacing for flow visualization
+FRAME_WIDTH  = 320
+FRAME_HEIGHT = 240
+SENSITIVITY  = 1.9
+STEP         = 11
 
 # --- Setup socket server ---
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -48,26 +48,34 @@ if frame is None:
     print("Error: Cannot capture first frame.")
     exit()
 
-# Resize to chosen resolution
+# Resize frame
 frame = cv2.resize(frame, (FRAME_WIDTH, FRAME_HEIGHT))
 prev_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
 # --- Initialize Kalman filters ---
 h, w = prev_gray.shape
 kalman_filters = {}
+
 for y in range(0, h, STEP):
     for x in range(0, w, STEP):
         kf = cv2.KalmanFilter(4, 2)
-        kf.measurementMatrix = np.array([[1,0,0,0],
-                                         [0,1,0,0]], np.float32)
-        kf.transitionMatrix = np.array([[1,0,1,0],
-                                        [0,1,0,1],
-                                        [0,0,1,0],
-                                        [0,0,0,1]], np.float32)
+        kf.measurementMatrix = np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0]
+        ], np.float32)
+
+        kf.transitionMatrix = np.array([
+            [1, 0, 1, 0],
+            [0, 1, 0, 1],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1]
+        ], np.float32)
+
         kf.processNoiseCov = np.eye(4, dtype=np.float32) * 0.03
         kf.measurementNoiseCov = np.eye(2, dtype=np.float32) * 0.5
-        kf.statePre = np.array([[x],[y],[0],[0]], np.float32)
-        kalman_filters[(x,y)] = kf
+        kf.statePre = np.array([[x], [y], [0], [0]], np.float32)
+
+        kalman_filters[(x, y)] = kf
 
 try:
     while True:
@@ -77,6 +85,7 @@ try:
             if not packet:
                 raise ConnectionError("Client disconnected")
             data += packet
+
         packed_size = data[:payload_size]
         data = data[payload_size:]
         msg_size = struct.unpack(">L", packed_size)[0]
@@ -86,6 +95,7 @@ try:
             if not packet:
                 raise ConnectionError("Client disconnected")
             data += packet
+
         frame_data = data[:msg_size]
         data = data[msg_size:]
 
@@ -95,27 +105,53 @@ try:
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        # Compute optical flow
-        flow = cv2.calcOpticalFlowFarneback(prev_gray, gray, None,
-                                            0.5, 3, 9, 2, 5, 1.1, 0)
+        # --- Optical Flow ---
+        flow = cv2.calcOpticalFlowFarneback(
+            prev_gray, gray, None,
+            0.5, 3, 9, 2, 5, 1.1, 0
+        )
+
         output = frame.copy()
 
-        # Draw smoothed motion vectors
+        # --- Draw smoothed motion vectors ---
         for y in range(0, h, STEP):
             for x in range(0, w, STEP):
                 fx, fy = flow[y, x]
+
                 if np.sqrt(fx**2 + fy**2) > SENSITIVITY:
-                    measured = np.array([[np.float32(x + fx)], [np.float32(y + fy)]])
-                    kf = kalman_filters[(x,y)]
+                    measured = np.array([
+                        [np.float32(x + fx)],
+                        [np.float32(y + fy)]
+                    ])
+
+                    kf = kalman_filters[(x, y)]
                     kf.correct(measured)
                     predicted = kf.predict()
-                    end_x, end_y = int(predicted[0]), int(predicted[1])
 
-                    cv2.arrowedLine(output, (x, y), (end_x, end_y),
-                                    (0, 255, 0), 1, tipLength=0.3)
+                    # ✅ FIX: extract scalars properly
+                    end_x = int(predicted[0, 0])
+                    end_y = int(predicted[1, 0])
+
+                    # keep arrows inside frame
+                    end_x = np.clip(end_x, 0, w - 1)
+                    end_y = np.clip(end_y, 0, h - 1)
+
+                    cv2.arrowedLine(
+                        output,
+                        (x, y),
+                        (end_x, end_y),
+                        (0, 255, 0),
+                        1,
+                        tipLength=0.3
+                    )
+
                     print(f"Point ({x},{y}) → Smoothed ({end_x},{end_y})")
 
-        cv2.imshow(f"Smoothed Optical Flow ({FRAME_WIDTH}x{FRAME_HEIGHT}, Sens={SENSITIVITY})", output)
+        cv2.imshow(
+            f"Smoothed Optical Flow ({FRAME_WIDTH}x{FRAME_HEIGHT}, Sens={SENSITIVITY})",
+            output
+        )
+
         prev_gray = gray.copy()
 
         if cv2.waitKey(1) & 0xFF == 27:  # ESC
@@ -128,4 +164,3 @@ finally:
     conn.close()
     server_socket.close()
     cv2.destroyAllWindows()
-    
